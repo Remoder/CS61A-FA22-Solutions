@@ -1,161 +1,141 @@
-# * Question 2: Email * 
-class Email:
-    """ Every email object has 3 instance attributes: the
-    message, the sender name, and the recipient name.
-    >>> email = Email('hello', 'Alice', 'Bob')
-    >>> email.msg
-    'hello'
-    >>> email.sender_name
-    'Alice'
-    >>> email.recipient_name
-    'Bob'
+# * Question 2: Add This Many *
+def add_this_many(x, el, s):
+    """ Adds el to the end of s the number of times x occurs in s.
+    >>> s = [1, 2, 4, 2, 1]
+    >>> add_this_many(1, 5, s)
+    >>> s
+    [1, 2, 4, 2, 1, 5, 5]
+    >>> add_this_many(2, 2, s)
+    >>> s
+    [1, 2, 4, 2, 1, 5, 5, 2, 2]
     """
-    def __init__(self, msg, sender_name, recipient_name):
-        self.msg = msg
-        self.sender_name = sender_name
-        self.recipient_name = recipient_name
+    for elem in s[:]:
+        if elem == x:
+            s.append(el)
 
-class Server:
-    """ Each Server has an instance attribute clients, which
-    is a dictionary that associates client names with
-    client objects.
+
+
+# * Question 5: Filter-Iter * 
+def filter_iter(iterable, f):
     """
-    def __init__(self):
-        self.clients = {}
-
-    def send(self, email):
-        """ Take an email and put it in the inbox of the client
-        it is addressed to.
-        """
-        for client_name, client in self.clients.items():
-            if client_name == email.recipient_name:
-                client.inbox.append(email)
-
-    def register_client(self, client, client_name):
-        """ Takes a client object and client_name and adds them
-        to the clients instance attribute.
-        """
-        self.clients[client_name] = client
-
-class Client:
-    """ Every Client has instance attributes name (which is
-    used for addressing emails to the client), server
-    (which is used to send emails out to other clients), and
-    inbox (a list of all emails the client has received).
-
-    >>> s = Server()
-    >>> a = Client(s, 'Alice')
-    >>> b = Client(s, 'Bob')
-    >>> a.compose('Hello, World!', 'Bob')
-    >>> b.inbox[0].msg
-    'Hello, World!'
-    >>> a.compose('CS 61A Rocks!', 'Bob')
-    >>> len(b.inbox)
+    >>> is_even = lambda x: x % 2 == 0
+    >>> list(filter_iter(range(5), is_even))
+    [0, 2, 4]
+    >>> all_odd = (2*y-1 for y in range(5))
+    >>> list(filter_iter(all_odd, is_even))
+    []
+    >>> naturals = (n for n in range(1, 100))
+    >>> s = filter_iter(naturals, is_even)
+    >>> next(s)
     2
-    >>> b.inbox[1].msg
-    'CS 61A Rocks!'
+    >>> next(s)
+    4
     """
-    def __init__(self, server, name):
-        self.inbox = []
-        self.server = server
-        self.name = name
-        self.server.register_client(self, self.name)
-
-    def compose(self, msg, recipient_name):
-        """ Send an email with the given message msg to the
-        given recipient client.
-        """
-        email = Email(msg, self.name, recipient_name)
-        self.server.send(email)
-
-    def receive(self, email):
-        """ Take an email and add it to the inbox of this
-        client.
-        """
-        self.inbox.append(email)
+    iterator = iter(iterable)
+    for elem in iterator:
+        if f(elem):
+            yield elem
 
 
 
-# * Pet Base Class Implementation * 
-class Pet:
-    def __init__(self, name, owner):
-        self.is_alive = True
-        self.name = name
-        self.owner = owner
+# * Question 6: Primes Generator *
+def is_prime(n):
+    """
+    >>> is_prime(2)
+    True
+    >>> is_prime(16)
+    False
+    >>> is_prime(521)
+    True
+    """
+    def helper(i):
+        if i > (n ** 0.5):
+            return True
+        elif n % i == 0:
+            return False
+        return helper(i+2)
+    return helper(2)
 
-    def eat(self, thing):
-        print(self.name + " ate a " + str(thing) + "!")
+def primes_gen(n):
+    """ Generates primes in decreasing order
+    >>> pg = primes_gen(7)
+    >>> list(pg)
+    [7, 5, 3, 2]
+    """
+    if n == 1:
+        return 
+    if is_prime(n):
+        yield n
+    yield from primes_gen(n-1)
 
-    def talk(self):
-        print(self.name)
-
-class Dog(Pet):
-    def talk(self):
-        super().talk()
-        print('This Dog says woof!')
 
 
+# * Question 7: Generate Preorder
+def preorder(t):
+    """ Return a list of the entries in this tree in the order that they 
+    would be visited by a preorder travelsal.
 
-# * Question 3: Cat *
-# * Question 5: Own A Cat *
-class Cat(Pet):
-    def __init__(self, name, owner, lives=9):
-        super().__init__(name, owner)
-        self.lives = lives
+    >>> numbers = Tree(1, [Tree(2), Tree(3, [Tree(4), Tree(5)]), Tree(6, [Tree(7)])])
+    >>> preorder(numbers)
+    [1, 2, 3, 4, 5, 6, 7]
+    >>> preorder(Tree(2, [Tree(4, [Tree(6)])]))
+    [2, 4, 6]
+    """
+    lst = []
+    for sub_tree in t.branches:
+        lst += preorder(sub_tree)
+    return [t.label] + lst
 
-    def talk(self):
-        """ Print out a cat's greeting.
+def generate_preorder(t):
+    """ Yield the entries in this tree in the order that they
+    would be visited by a preorder traversal.
+    
+    >>> numbers = Tree(1, [Tree(2), Tree(3, [Tree(4), Tree(5)]), Tree(6, [Tree(7)])])
+    >>> gen = generate_preorder(numbers)
+    >>> next(gen)
+    1
+    >>> list(gen)
+    [2, 3, 4, 5, 6, 7]
+    """
+    yield t.label
+    for sub_tree in t.branches:
+        yield from generate_preorder(sub_tree)
 
-        >>> Cat('Thomas', 'Tammy').talk()
-        Thomas says meow!
-        """
-        print(self.name, 'says meow!')
 
-    def lose_life(self):
-        """ Decrements a cat's life by 1. When lives reaches zero, 
-        is_alive becomes False. If this is called after lives has
-        reached zero, print 'This cat has no more lives to lose.'
-        """
-        if self.lives == 0:
-            print('This cat has no more lives to lose.')
+
+# * Question 8: Mystery Reverse Environment Diagram *
+def mystery(p, q):
+    p[1].extend(q)
+    q.append(p[1:])
+
+p = [2, 3]
+q = [4, [p]]
+mystery(q, p)
+
+
+
+# * Tree Class *
+class Tree:
+    def __init__(self, label, branches=[]):
+        for b in branches:
+            assert isinstance(b, Tree)
+        self.label = label
+        self.branches = list(branches)
+
+    def is_leaf(self):
+        return not self.branches
+
+    def __repr__(self):
+        if self.branches:
+            branch_str = ', ' + repr(self.branches)
         else:
-            self.lives -= 1
+            branch_str = ''
+        return 'Tree({0}{1})'.format(self.label, branch_str)
 
-    @classmethod
-    def cat_creator(cls, owner):
-        """
-        Returns a new instance of a Cat.
-
-        This instance's name is "[owner]'s Cat", with
-        [owner] being the name of its owner.
-
-        >>> cat1 = Cat.cat_creator("Bryce")
-        >>> isinstance(cat1, Cat)
-        True
-        >>> cat1.owner
-        'Bryce'
-        >>> cat1.name
-        "Bryce's Cat"
-        >>> cat2 = Cat.cat_creator("Tyler")
-        >>> cat2.owner
-        'Tyler'
-        >>> cat2.name
-        "Tyler's Cat"
-        """
-        name = "{}'s Cat".format(owner)
-        return cls(name, owner)
-
-
-
-# * Question 4: Noisy Cat *
-class NoisyCat(Cat):
-    """ A Cat that repeats things twice. """
-    def talk(self):
-        """ Talks twice as much as a regular cat.
-        >>> NoisyCat('Magic', 'James').talk()
-        Magic says meow!
-        Magic says meow!
-        """
-        for _ in range(2):
-            super().talk()
-        
+    def __str__(self):
+        def print_tree(t, indent=0):
+            tree_str = '  ' * indent + str(t.label) + '\n'
+            for b in t.branches:
+                tree_str += print_tree(b, indent + 1)
+            return tree_str
+        return print_tree(self).rstrip()
