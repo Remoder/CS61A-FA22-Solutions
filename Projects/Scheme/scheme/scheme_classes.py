@@ -110,6 +110,17 @@ class LambdaProcedure(Procedure):
             repr(self.formals), repr(self.body), repr(self.env))
 
 
+class MacroProcedure(LambdaProcedure):
+    """A procedure defined by a define-macro form.
+    Although there's no more new members,
+    LambdaProcedure and MacroProcedure are different in scheme_eval().
+    So we need one more class to represent MacroProcedure.
+    Maybe the better way is to create a BaseClassProcedure,
+    which LambdaProcedure and MacroProcedure inherit from.
+    """
+    pass
+    
+
 class MuProcedure(Procedure):
     """A procedure defined by a mu expression, which has dynamic scope.
      _________________

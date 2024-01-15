@@ -38,7 +38,7 @@ def do_define_form(expressions, env):
         validate_form(expressions, 2, 2)  # Checks that expressions is a list of length exactly 2
         # BEGIN PROBLEM 4
         "*** YOUR CODE HERE ***"
-        value = eval_all(expressions.rest, env)
+        value = eval_all(expressions.rest, env, False)
         env.define(signature, value)
         return signature
         # END PROBLEM 4
@@ -109,9 +109,9 @@ def do_if_form(expressions, env):
     """
     validate_form(expressions, 2, 3)
     if is_scheme_true(scheme_eval(expressions.first, env)):
-        return scheme_eval(expressions.rest.first, env)
+        return scheme_eval(expressions.rest.first, env, True) 
     elif len(expressions) == 3:
-        return scheme_eval(expressions.rest.rest.first, env)
+        return scheme_eval(expressions.rest.rest.first, env, True)
 
 
 def do_and_form(expressions, env):
@@ -132,7 +132,7 @@ def do_and_form(expressions, env):
     "*** YOUR CODE HERE ***"
     result = True
     while expressions:
-        result, expressions = scheme_eval(expressions.first, env), expressions.rest
+        result, expressions = scheme_eval(expressions.first, env, not expressions.rest), expressions.rest
         if is_scheme_false(result):
             return result
     return result
@@ -157,7 +157,7 @@ def do_or_form(expressions, env):
     "*** YOUR CODE HERE ***"
     result = False
     while expressions:
-        result, expressions = scheme_eval(expressions.first, env), expressions.rest 
+        result, expressions = scheme_eval(expressions.first, env, not expressions.rest), expressions.rest 
         if is_scheme_true(result):
             return result
     return result
@@ -212,7 +212,7 @@ def make_let_frame(bindings, env):
     while bindings:
         clause = bindings.first
         validate_form(clause, 2, 2)
-        names, vals, bindings = Pair(clause.first, names), Pair(eval_all(clause.rest, env), vals), bindings.rest
+        names, vals, bindings = Pair(clause.first, names), Pair(eval_all(clause.rest, env, False), vals), bindings.rest
     validate_formals(names)
     # END PROBLEM 14
     return env.make_child_frame(names, vals)
@@ -229,6 +229,17 @@ def do_define_macro(expressions, env):
     """
     # BEGIN PROBLEM OPTIONAL_1
     "*** YOUR CODE HERE ***"
+    validate_form(expressions, 2)
+    signature = expressions.first
+    validate_formals(signature)
+    
+    if isinstance(signature, Pair) and scheme_symbolp(signature.first):
+        signature, formals, body = signature.first, signature.rest, expressions.rest
+        env.define(signature, MacroProcedure(formals, body, env))
+        return signature
+    else:
+        bad_signature = signature.first if isinstance(signature, Pair) else signature
+        raise SchemeError('non-symbol: {0}'.format(bad_signature))
     # END PROBLEM OPTIONAL_1
 
 

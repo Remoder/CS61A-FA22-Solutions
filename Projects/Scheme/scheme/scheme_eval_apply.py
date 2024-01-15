@@ -36,6 +36,10 @@ def scheme_eval(expr, env, _=None):  # Optional third argument is ignored
         # BEGIN PROBLEM 3
         "*** YOUR CODE HERE ***"
         first = scheme_eval(first, env)
+        """ This <if> is for Optional Question 1. 
+        To understand better, just print <first> out. """
+        if isinstance(first, MacroProcedure):
+            return scheme_eval(complete_apply(first, rest, env), env)
         rest = rest.map(lambda x: scheme_eval(x, env))
         return scheme_apply(first, rest, env)
         # END PROBLEM 3
@@ -82,9 +86,15 @@ def scheme_apply(procedure, args, env):
         assert False, "Unexpected procedure: {}".format(procedure)
 
 
-def eval_all(expressions, env):
+def eval_all(expressions, env, tail=True):
     """Evaluate each expression in the Scheme list EXPRESSIONS in
     Frame ENV (the current environment) and return the value of the last.
+
+    By the way, the third param is added by myself.
+    When trying to complete Tail Recursion Question,
+    You will find how important tail=True is.
+    Maybe there will be a better way to solve the question, 
+    but I DONT GIVE IT A FXXK!
 
     >>> eval_all(read_line("(1)"), create_global_frame())
     1
@@ -100,7 +110,7 @@ def eval_all(expressions, env):
     # BEGIN PROBLEM 6
     res = None
     while expressions:
-        res, expressions = scheme_eval(expressions.first, env), expressions.rest
+        res, expressions = scheme_eval(expressions.first, env, (not expressions.rest) and tail), expressions.rest
     return res
     # END PROBLEM 6
 
@@ -140,6 +150,21 @@ def optimize_tail_calls(unoptimized_scheme_eval):
         result = Unevaluated(expr, env)
         # BEGIN PROBLEM EC
         "*** YOUR CODE HERE ***"
+        """ It really confused me that what functions else should be changed.
+        After searching and thinking, I passed ok finally.
+        However, Tail Contexts exist in <lambda, if, cond, and, or, begin>.
+        For <if, and, or>, relative functions in scheme_forms.py should be changed.
+        For <cond, lambda, begin>, I complete their functions by eval_all() in scheme_eval_apply.py,
+        and that's what I need to modify.
+        Don't forget that only the last sub-expression should call scheme_eval() with 'tail=True'.
+        
+        Added: <let, define> should NOT call scheme_eval() with 'tail=True' indirectly,
+        but I complete them with eval_all(), meaning I cannot avoid such a problem. 
+        To deal with, I set the third param for eval_all(). 
+        """
+        while isinstance(result, Unevaluated):
+            result = unoptimized_scheme_eval(result.expr, result.env)
+        return result
         # END PROBLEM EC
     return optimized_eval
 
@@ -148,4 +173,4 @@ def optimize_tail_calls(unoptimized_scheme_eval):
 # Uncomment the following line to apply tail call optimization #
 ################################################################
 
-# scheme_eval = optimize_tail_calls(scheme_eval)
+scheme_eval = optimize_tail_calls(scheme_eval)
